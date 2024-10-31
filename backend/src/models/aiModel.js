@@ -1,18 +1,16 @@
+require("dotenv").config();
 const aiModel = {
   getAIResponse: async (message) => {
     try {
       console.log("Đang gửi tin nhắn:", message); // Log tin nhắn đang được gửi
 
-      const res = await fetch(
-        "https://cb11-2405-4802-1bd4-8ce0-7dc1-5a6e-b0a4-4fcb.ngrok-free.app/api/data",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(message),
-        }
-      );
+      const res = await fetch(process.env.PAST__Al, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(message),
+      });
 
       if (res.ok) {
         console.log("Gửi tin nhắn đến AI thành công");
