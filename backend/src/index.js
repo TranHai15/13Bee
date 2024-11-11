@@ -39,9 +39,7 @@ let connectedUsers = 0;
 
 io.on("connection", (socket) => {
   connectedUsers++;
-  console.log(
-    `Người dùng đã kết nối: ${socket.id}. Tổng số người dùng kết nối: ${connectedUsers}`
-  );
+  console.log(`Người dùng đã kết nối: ${socket.id}`);
 
   socket.on("sendMessage", async (message) => {
     // Đánh dấu là async

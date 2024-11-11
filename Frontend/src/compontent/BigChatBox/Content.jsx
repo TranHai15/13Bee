@@ -45,13 +45,27 @@ export default function Content() {
     setMessage(e.target.value);
   };
 
+  function validateInput(input) {
+    const trimmedInput = input.trim().replace(/\s+/g, " ");
+
+    if (trimmedInput === "") {
+      return "";
+    }
+    const sanitizedInput = trimmedInput
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+
+    return sanitizedInput;
+  }
   const submitMessage = () => {
-    if (message.trim() === 0) {
+    const dataMessage = validateInput(message);
+    console.log(dataMessage);
+    if (dataMessage === "") {
       return;
     } else {
-      if (message.trim()) {
+      if (dataMessage) {
         // Tạo đối tượng tin nhắn
-        const newMessage = { role: "user", content: message };
+        const newMessage = { role: "user", content: dataMessage };
 
         // Cập nhật trạng thái với hàm callback
         SetMessagesChat((oldMessages) => {
@@ -73,23 +87,36 @@ export default function Content() {
   useEffect(() => {
     const handleReceiveMessage = (res) => {
       console.log("res", res);
-
-      // Lấy tất cả các object có role là "answer"
-      const answers = res.filter((item) => item.role === "answer");
-
-      // // Kiểm tra xem có dữ liệu trả về không
-      if (answers.length > 0) {
+      // const da = res;
+      // console.log(da);
+      // const data = [res];
+      // console.log("data", data);
+      if (res.can_answer === false) {
         SetMessagesChat((oldMessages) => [
           ...oldMessages,
-          ...answers.map((answer) => ({
+          ...res.map((answer) => ({
             role: "answer",
             content: answer.content,
-          })), // Thêm tất cả answers vào messages
+          })),
         ]);
+        setActive("true");
+      } else {
+        //   // Lấy tất cả các object có role là "answer"
+        const answers = res.filter((item) => item.role === "answer");
+        // console.log("answers", answers);
+        // // Kiểm tra xem có dữ liệu trả về không
+        if (answers.length > 0) {
+          SetMessagesChat((oldMessages) => [
+            ...oldMessages,
+            ...answers.map((answer) => ({
+              role: "answer",
+              content: answer.content,
+            })), // Thêm tất cả answers vào messages
+          ]);
+        }
+        //   // Cập nhật active state
+        setActive("true");
       }
-
-      // Cập nhật active state
-      setActive("true");
     };
 
     socket.on("receiveMessage", handleReceiveMessage);
@@ -138,7 +165,7 @@ export default function Content() {
                 <span className="logo flex-none w-8 rounded-full">
                   <img
                     className="w-full rounded-full object-contain"
-                    src="https://cdn.pixabay.com/photo/2017/06/10/12/46/bee-2389834_1280.png"
+                    src="../../../src/assets/beeit.jpg"
                   />
                 </span>
               </div>
@@ -161,7 +188,7 @@ export default function Content() {
                       <span className="logo flex-none w-8 absolute top-0 rounded-full">
                         <img
                           className="w-full rounded-full object-contain"
-                          src="https://cdn.pixabay.com/photo/2017/06/10/12/46/bee-2389834_1280.png"
+                          src="../../../src/assets/beeit.jpg"
                         />
                       </span>
                     </div>
@@ -189,7 +216,7 @@ export default function Content() {
                       <span className="logo flex-none w-8 absolute top-0 rounded-full">
                         <img
                           className="w-full rounded-full object-contain"
-                          src="https://cdn.pixabay.com/photo/2017/06/10/12/46/bee-2389834_1280.png"
+                          src="../../../src/assets/beeit.jpg"
                         />
                       </span>
                     </div>
