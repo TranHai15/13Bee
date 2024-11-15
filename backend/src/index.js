@@ -25,7 +25,7 @@ async function processMessage(message, idSocket) {
     idSocket: idSocket,
 
     messages: [
-      { role: "system", content: "Bạn là một trợ lí ảo." },
+      { role: "system", content: "Bạn là một trợ lí ảo. Tên của bạn là 13Bee (Một Ba Bi). Bạn được sinh ra ngày 01/10/2024. Hãy chào hỏi một cách ngắn gọn và thân thiện, số điện thoại 0838 411 897" },
       ...message,
     ],
   };
