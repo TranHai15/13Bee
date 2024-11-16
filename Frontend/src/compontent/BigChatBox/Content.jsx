@@ -6,17 +6,13 @@ const SOCKET_URL = "https://0be1-118-70-118-224.ngrok-free.app";
 const socket = io(SOCKET_URL);
 
 export default function Content() {
-  // Các state quản lý tin nhắn và trạng thái
   const [message, setMessage] = useState(""); // Lưu tin nhắn người dùng
   const [MessageChat, SetMessagesChat] = useState([]); // Lưu lịch sử tin nhắn
-  const [tempMessage, setTempMessage] = useState(""); // Tin nhắn tạm thời của AI
   const [charLimitReached, setCharLimitReached] = useState(false); // Kiểm tra giới hạn ký tự
   const [connectionError, setConnectionError] = useState(true); // Kiểm tra lỗi kết nối
   const [isSending, setIsSending] = useState(false); // Kiểm tra trạng thái gửi tin nhắn
-  const charLimit = 500; // Giới hạn ký tự cho tin nhắn
+  const charLimit = 500; // Giới hạn ký tự
   const start = useRef(true); // Biến kiểm tra trạng thái ban đầu của màn hình
-
-  // Tham chiếu đến các phần tử DOM
   const textareaRef = useRef(null);
   const chatEndRef = useRef(null);
 
@@ -26,64 +22,54 @@ export default function Content() {
       textareaRef.current.style.height = "auto";
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
     }
-    setCharLimitReached(message.length >= charLimit); // Kiểm tra nếu tin nhắn vượt quá giới hạn ký tự
+    setCharLimitReached(message.length >= charLimit);
   }, [message]);
 
-  // Lắng nghe các tin nhắn từ server (gửi qua Socket.IO)
+  // Xử lý tin nhắn nhận từ server
   useEffect(() => {
-    const handleReceiveMessage = (res) => {
-      if (!res || !res.content?.trim()) return;
+    const handleReceiveMessage = (response) => {
+      const { content } = response;
+      console.log("Content received:", content);
 
-      const isAnswer = res.role === "answer";
-
-      if (isAnswer) {
-        const chars = res.content.split(""); // Chia nội dung thành từng ký tự
-        let index = 0;
-
-        const typingEffect = setInterval(() => {
-          if (index < chars.length) {
-            setTempMessage((prev) => prev + chars[index]);
-            index++;
-          } else {
-            clearInterval(typingEffect); // Dừng khi đã hiển thị hết
-          }
-        }, 50); // Tốc độ hiển thị (50ms mỗi ký tự)
-      }
-
-      if (res.done) {
-        SetMessagesChat((prev) => [
-          ...prev,
-          { role: "answer", content: tempMessage },
-        ]);
-        setTempMessage("");
-        setIsSending(false);
-      }
+      // Cập nhật tin nhắn mới bằng cách hợp nhất với tin nhắn hiện tại
+      SetMessagesChat((prevMessages) => {
+        const lastMessage = prevMessages[prevMessages.length - 1];
+        if (lastMessage && lastMessage.role === "answer") {
+          // Gộp nội dung tin nhắn mới vào nội dung trước đó
+          return [
+            ...prevMessages.slice(0, -1),
+            { role: "answer", content: lastMessage.content + content },
+          ];
+        } else {
+          // Thêm nội dung mới nếu không có tin nhắn trước đó
+          return [...prevMessages, { role: "answer", content }];
+        }
+      });
     };
 
     socket.on("receive_message", handleReceiveMessage);
 
     socket.on("connect", () => {
       console.log("Đã kết nối tới server");
-      setConnectionError(true); // Xóa lỗi kết nối
+      setConnectionError(true);
     });
 
     socket.on("connect_error", (error) => {
       console.error("Lỗi kết nối:", error);
-      setConnectionError(false); // Đặt lỗi kết nối
+      setConnectionError(false);
     });
 
     socket.on("disconnect", () => {
       console.log("Mất kết nối tới server");
-      setConnectionError(false); // Đặt lỗi khi mất kết nối
+      setConnectionError(false);
       alert("Kết nối bị gián đoạn!");
     });
 
     return () => {
-      socket.off("receive_message", handleReceiveMessage); // Dọn dẹp khi component bị hủy
+      socket.off("receive_message", handleReceiveMessage);
     };
-  }, [tempMessage]);
+  }, []);
 
-  // console.log("message", tempMessage);
   // Tự động cuộn tới tin nhắn cuối cùng khi có tin nhắn mới
   useEffect(() => {
     if (chatEndRef.current) {
@@ -125,11 +111,10 @@ export default function Content() {
           content:
             "Bạn là một trợ lí ảo. Tên của bạn là 13Bee (Một Ba Bi). Bạn được sinh ra ngày 01/10/2024. Hãy chào hỏi một cách ngắn gọn và thân thiện, số điện thoại 0838 411 897",
         },
+        // { ...MessageChat },
         { role: "user", content: dataMessage }, // Tin nhắn người dùng
       ],
     };
-
-    console.log("user__message", userMessage);
 
     // Thêm tin nhắn người dùng vào lịch sử chat
     SetMessagesChat((prev) => [
@@ -241,9 +226,7 @@ export default function Content() {
                     </p>
                   </div>
                 </div>
-                <div>
-                  <p>{tempMessage}</p>
-                </div>
+
                 {isSending === true && index === MessageChat.length - 1 ? (
                   <>
                     <div className="w-8 h-auto flex top-0 relative">
