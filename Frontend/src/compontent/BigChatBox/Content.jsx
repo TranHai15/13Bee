@@ -1,55 +1,102 @@
 import { useState, useRef, useEffect } from "react";
 import io from "socket.io-client";
 
-// Kết nối đến server Socket.IO
-const socket = io("http://localhost:3000"); // Địa chỉ của server Socket.IO
+// URL của server Socket.IO
+const SOCKET_URL = "https://0be1-118-70-118-224.ngrok-free.app";
+const socket = io(SOCKET_URL);
 
 export default function Content() {
-  const [message, setMessage] = useState(""); // Khởi tạo message trống
-  const [charLimitReached, setCharLimitReached] = useState(false); // Trạng thái cho thông báo
+  // Các state quản lý tin nhắn và trạng thái
+  const [message, setMessage] = useState(""); // Lưu tin nhắn người dùng
+  const [MessageChat, SetMessagesChat] = useState([]); // Lưu lịch sử tin nhắn
+  const [tempMessage, setTempMessage] = useState(""); // Tin nhắn tạm thời của AI
+  const [charLimitReached, setCharLimitReached] = useState(false); // Kiểm tra giới hạn ký tự
+  const [connectionError, setConnectionError] = useState(true); // Kiểm tra lỗi kết nối
+  const [isSending, setIsSending] = useState(false); // Kiểm tra trạng thái gửi tin nhắn
+  const charLimit = 500; // Giới hạn ký tự cho tin nhắn
+  const start = useRef(true); // Biến kiểm tra trạng thái ban đầu của màn hình
+
+  // Tham chiếu đến các phần tử DOM
   const textareaRef = useRef(null);
-  const chatEndRef = useRef(null); // Tham chiếu đến phần cuối cùng của danh sách tin nhắn
-  const [active, setActive] = useState("true");
-  const [connectionError, setConnectionError] = useState(false); // Trạng thái lỗi kết nối
-  const [MessageChat, SetMessagesChat] = useState([]);
-  const start = useRef("true");
-  const charLimit = 500; // Giới hạn số ký tự
+  const chatEndRef = useRef(null);
 
+  // Điều chỉnh chiều cao textarea khi người dùng nhập
   useEffect(() => {
-    const textarea = textareaRef.current;
-    if (textarea) {
-      textarea.focus(); // Focus vào textarea
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
     }
-    // Điều chỉnh chiều cao của textarea khi message thay đổi
-    if (textarea) {
-      textarea.style.height = "auto"; // Reset chiều cao
-      textarea.style.height = textarea.scrollHeight + "px"; // Điều chỉnh chiều cao dựa trên nội dung
-      textarea.scrollTop = textarea.scrollHeight; // Tự động cuộn lên
-    }
-
-    // Kiểm tra xem người dùng đã đạt đến giới hạn ký tự hay chưa
-    if (message.length >= charLimit) {
-      setCharLimitReached(true);
-    } else {
-      setCharLimitReached(false);
-    }
+    setCharLimitReached(message.length >= charLimit); // Kiểm tra nếu tin nhắn vượt quá giới hạn ký tự
   }, [message]);
 
+  // Lắng nghe các tin nhắn từ server (gửi qua Socket.IO)
   useEffect(() => {
-    console.log("Updated MessageChat:", MessageChat);
-  }, [MessageChat]);
+    const handleReceiveMessage = (res) => {
+      if (!res || !res.content?.trim()) return;
 
+      const isAnswer = res.role === "answer";
+
+      if (isAnswer) {
+        const chars = res.content.split(""); // Chia nội dung thành từng ký tự
+        let index = 0;
+
+        const typingEffect = setInterval(() => {
+          if (index < chars.length) {
+            setTempMessage((prev) => prev + chars[index]);
+            index++;
+          } else {
+            clearInterval(typingEffect); // Dừng khi đã hiển thị hết
+          }
+        }, 50); // Tốc độ hiển thị (50ms mỗi ký tự)
+      }
+
+      if (res.done) {
+        SetMessagesChat((prev) => [
+          ...prev,
+          { role: "answer", content: tempMessage },
+        ]);
+        setTempMessage("");
+        setIsSending(false);
+      }
+    };
+
+    socket.on("receive_message", handleReceiveMessage);
+
+    socket.on("connect", () => {
+      console.log("Đã kết nối tới server");
+      setConnectionError(true); // Xóa lỗi kết nối
+    });
+
+    socket.on("connect_error", (error) => {
+      console.error("Lỗi kết nối:", error);
+      setConnectionError(false); // Đặt lỗi kết nối
+    });
+
+    socket.on("disconnect", () => {
+      console.log("Mất kết nối tới server");
+      setConnectionError(false); // Đặt lỗi khi mất kết nối
+      alert("Kết nối bị gián đoạn!");
+    });
+
+    return () => {
+      socket.off("receive_message", handleReceiveMessage); // Dọn dẹp khi component bị hủy
+    };
+  }, [tempMessage]);
+
+  // console.log("message", tempMessage);
+  // Tự động cuộn tới tin nhắn cuối cùng khi có tin nhắn mới
   useEffect(() => {
-    // Tự động cuộn xuống dưới cùng mỗi khi có sự thay đổi trong MessageChat
     if (chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [MessageChat]);
 
+  // Xử lý khi người dùng nhập tin nhắn
   const handleInputChange = (e) => {
     setMessage(e.target.value);
   };
 
+  // Gửi tin nhắn khi người dùng nhấn phím Enter
   const clickEnter = (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -57,125 +104,49 @@ export default function Content() {
     }
   };
 
-  function validateInput(input) {
-    const trimmedInput = input.trim().replace(/\s+/g, " ");
-    if (trimmedInput === "") {
-      return "";
-    }
-    const sanitizedInput = trimmedInput
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
-    return sanitizedInput;
-  }
-
-  const submitMessage = () => {
-    if (active === "false") {
-      // Nếu trạng thái là false, ngừng gửi tin nhắn
-      return;
-    }
-    start.current = false;
-    const dataMessage = validateInput(message);
-    console.log(dataMessage);
-    if (dataMessage === "" && active == "false") {
-      return;
-    } else {
-      if (dataMessage) {
-        // Tạo đối tượng tin nhắn
-        const newMessage = { role: "user", content: dataMessage };
-
-        // Cập nhật trạng thái với hàm callback
-        SetMessagesChat((oldMessages) => {
-          const updatedMessages = [...oldMessages, newMessage];
-
-          // Gửi tin nhắn hiện tại lên server ngay sau khi trạng thái được cập nhật
-          socket.emit("sendMessage", updatedMessages); // gửi `updatedMessages` nếu cần
-
-          return updatedMessages; // trả về mảng tin nhắn đã cập nhật
-        });
-
-        setMessage(""); // Xóa tin nhắn sau khi gửi
-        setActive("false");
-      }
-    }
+  // Kiểm tra tính hợp lệ của tin nhắn (ngăn chặn các thẻ HTML)
+  const validateInput = (input) => {
+    return input.trim().replace(/</g, "&lt;").replace(/>/g, "&gt;") || "";
   };
 
-  // Nhận tin nhắn từ server
-  useEffect(() => {
-    const handleReceiveMessage = (res) => {
-      console.log("res", res);
+  // Gửi tin nhắn đến server khi người dùng nhấn nút gửi
+  const submitMessage = () => {
+    start.current = false;
+    if (isSending) return; // Nếu đang gửi tin nhắn, không gửi lại
 
-      // Nếu có tin nhắn trả lời, xử lý như sau:
-      if (res.can_answer === false) {
-        SetMessagesChat((oldMessages) => [
-          ...oldMessages,
-          ...res.map((answer) => ({
-            role: "answer",
-            content: answer.content,
-          })),
-        ]);
-        // Xóa timeout trước đó (nếu có
-        setActive("true");
-      } else {
-        // Lọc các tin nhắn trả lời
-        const answers = res.filter((item) => item.role === "answer");
+    const dataMessage = validateInput(message); // Kiểm tra tin nhắn hợp lệ
+    if (!dataMessage) return; // Nếu tin nhắn không hợp lệ, không gửi
 
-        if (answers.length > 0) {
-          SetMessagesChat((oldMessages) => [
-            ...oldMessages,
-            ...answers.map((answer) => ({
-              role: "answer",
-              content: answer.content,
-            })), // Thêm tất cả answers vào messages
-          ]);
-        }
-        setActive("true");
-      }
+    const userMessage = {
+      idSocket: socket.id,
+      messages: [
+        {
+          role: "system",
+          content:
+            "Bạn là một trợ lí ảo. Tên của bạn là 13Bee (Một Ba Bi). Bạn được sinh ra ngày 01/10/2024. Hãy chào hỏi một cách ngắn gọn và thân thiện, số điện thoại 0838 411 897",
+        },
+        { role: "user", content: dataMessage }, // Tin nhắn người dùng
+      ],
     };
 
-    socket.on("receiveMessage", handleReceiveMessage);
-    const handleConnect = () => {
-      console.log("Connected to the server");
-      setConnectionError(true); // Đặt lại trạng thái lỗi kết nối khi kết nối thành công
-    };
+    console.log("user__message", userMessage);
 
-    const handleConnectError = (error) => {
-      console.error("Connection error:", error);
-      setConnectionError(false); // Cập nhật trạng thái lỗi kết nối
-    };
+    // Thêm tin nhắn người dùng vào lịch sử chat
+    SetMessagesChat((prev) => [
+      ...prev,
+      { role: "user", content: dataMessage },
+    ]);
+    setMessage(""); // Xóa tin nhắn hiện tại
+    setIsSending(true); // Đặt trạng thái gửi tin nhắn
 
-    const handleReconnect = () => {
-      console.log("Reconnected to the server");
-      setConnectionError(true); // Đặt lại trạng thái khi kết nối lại thành công
-    };
+    // Gửi tin nhắn đến server
+    socket.emit("send_message", userMessage, (response) => {
+      console.log("Phản hồi từ server:", response);
+      setIsSending(false); // Đặt trạng thái gửi xong
+    });
+  };
 
-    const handleReconnectError = (error) => {
-      console.error("Reconnect error:", error);
-      setConnectionError(false); // Cập nhật trạng thái khi không thể kết nối lại
-    };
-
-    const handleDisconnect = () => {
-      console.log("Disconnected from the server");
-      setConnectionError(false); // Cập nhật trạng thái khi kết nối bị ngắt
-      alert("Ket nối bị gián đoạn");
-    };
-
-    // Lắng nghe các sự kiện kết nối
-    socket.on("connect", handleConnect);
-    socket.on("connect_error", handleConnectError);
-    socket.on("reconnect", handleReconnect);
-    socket.on("reconnect_error", handleReconnectError);
-    socket.on("disconnect", handleDisconnect);
-
-    // Dọn dẹp sự kiện khi component bị unmount
-    return () => {
-      socket.off("connect", handleConnect);
-      socket.off("receiveMessage", handleReceiveMessage);
-      socket.off("connect_error", handleConnectError);
-      socket.off("reconnect", handleReconnect);
-      socket.off("reconnect_error", handleReconnectError);
-      socket.off("disconnect", handleDisconnect);
-    };
-  }, []);
+  console.log("MessageChat", MessageChat);
   return (
     <div>
       <header className="w-full h-12 bg-white fixed top-0 z-30 shadow-md flex justify-between items-center">
@@ -211,7 +182,7 @@ export default function Content() {
             {/* Các tin nhắn */}
             <div
               className={`flex items-center  h-9 mt-3  flex flex-col text-center gap-3 mt-[14%] ${
-                start.current == "true" ? "block" : "hidden"
+                start.current == true ? "block" : "hidden"
               }`}
             >
               <div className="w-[4rem] h-auto top-0 logo">
@@ -270,8 +241,10 @@ export default function Content() {
                     </p>
                   </div>
                 </div>
-
-                {active === "false" && index === MessageChat.length - 1 ? (
+                <div>
+                  <p>{tempMessage}</p>
+                </div>
+                {isSending === true && index === MessageChat.length - 1 ? (
                   <>
                     <div className="w-8 h-auto flex top-0 relative">
                       <span className="logo flex-none w-8 absolute top-0 rounded-full">
@@ -299,7 +272,7 @@ export default function Content() {
           </div>
           <div
             className={`mb-5  ${
-              start.current == "true" ? "fixed top-1/2  w-3/5" : ""
+              start.current == true ? "fixed top-1/2  w-3/5" : ""
             } `}
           >
             {charLimitReached && (
@@ -326,7 +299,7 @@ export default function Content() {
                 onClick={submitMessage}
                 className="w-8 flex-none absolute right-3 bottom-[7px]"
               >
-                {active === "true" ? (
+                {isSending === false ? (
                   <img src="../../../src/assets/svg-submit.svg" />
                 ) : (
                   <img className="logo" src="../../../src/assets/loaing.svg" />

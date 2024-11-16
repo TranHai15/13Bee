@@ -41,15 +41,15 @@ io.on("connection", (socket) => {
   connectedUsers++;
   console.log(`Người dùng đã kết nối: ${socket.id}`);
 
-  socket.on("sendMessage", async (message) => {
+  socket.on("send_message", async (message) => {
     // Đánh dấu là async
     console.log(`Tin nhắn nhận được từ client: id = ${socket.id}`);
 
     const responseMessage = await processMessage(message, socket.id); // Sử dụng await
-    console.log("responsMessage", responseMessage);
+    console.log("responsMessage", "ket noi thanh cong");
 
     setTimeout(() => {
-      socket.emit("receiveMessage", responseMessage);
+      socket.emit("receiveMessage", "rponoke");
     }, 100);
   });
 
