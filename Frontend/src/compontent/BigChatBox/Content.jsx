@@ -296,61 +296,72 @@
 //     </div>
 //   );
 // }
+
+
 import React, { useEffect, useState } from 'react';
 
-const StreamData = () => {
-  const [data, setData] = useState('');
-  const [isDone, setIsDone] = useState(false);
+function App() {
+  const [streamData, setStreamData] = useState('');
 
-  useEffect(() => {
-    // Địa chỉ của Flask API
-    const url = 'http://localhost:5000/stream';
 
-    // Tạo đối tượng EventSource để kết nối đến Flask API
-    const eventSource = new EventSource(url);
-
-    // Lắng nghe các sự kiện từ Flask server
-    eventSource.onmessage = (event) => {
-      console.log('Received data:', event.data); // In dữ liệu nhận được
-      if (event.data === '[START]'){
-        console.log("Đang nhận dữ liệu từ server gửi về")
-        setIsDone(false)
+  // Gửi yêu cầu POST khi nhấn nút "Post Request"
+  const handlePostRequest = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/stream', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: [
+            { role: 'system', content: 'Bạn là một trợ lí ảo.' },
+            { role: 'user', content: '13Bee là gì?' },
+          ],
+        }),
+      });
+  
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
       }
-      else if (event.data === '[DONE]') {
-        console.log("Nhận dữ liệu từ server thành công")
-        // Khi nhận được [DONE], đóng kết nối
-        eventSource.close();
-        setIsDone(true);
-      } else {
-        // Lưu dữ liệu nhận được vào state
-        setData((prevData) => prevData + event.data);
+  
+      // Đọc response stream
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+  
+      while (true) {
+        const {value, done} = await reader.read();
+        if (done) break;
+        
+        const text = decoder.decode(value);
+        const lines = text.split('\n');
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[START]') continue;
+            if (data === '[DONE]') break;
+            
+            setStreamData(prev => prev + data);
+          }
+        }
       }
-    };
-
-    // Xử lý sự kiện khi kết nối mở thành công
-    eventSource.onopen = () => {
-      console.log('Connection opened');
-    };
-
-    // Xử lý sự kiện lỗi
-    eventSource.onerror = (err) => {
-      console.error('Error:', err);
-      eventSource.close();  // Đóng kết nối khi có lỗi
-    };
-
-    // Cleanup khi component bị unmount
-    return () => {
-      eventSource.close();
-    };
-  }, []);
+  
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
 
   return (
-    <div>
-      <h1>Stream Data from Flask API</h1>
-      <p>{data}</p>
-      {isDone && <p>Stream finished!</p>}
+    <div className="App">
+      <h1>Flask Streaming Demo</h1>
+      <button onClick={handlePostRequest}>Post Request</button>
+      <div>
+        <h2>Streamed Data:</h2>
+        <pre>{streamData}</pre>
+      </div>
     </div>
   );
-};
+}
 
-export default StreamData;
+export default App;
+
