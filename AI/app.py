@@ -1,47 +1,74 @@
-from flask import Flask, request, jsonify
-from flask_socketio import SocketIO, emit  # Đảm bảo có Flask-SocketIO
-from run import askModel
+from flask import Flask, Response, request
+from flask_cors import CORS
+import time
+from transformers import AutoModelForCausalLM, AutoTokenizer
+import torch
+from transformers import TextIteratorStreamer
+from threading import Thread
 
+# Khởi tạo model và tokenizer
+model_name = "checkpoint-340"
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16)
+
+# Di chuyển model sang GPU nếu có
+device = "cuda" if torch.cuda.is_available() else "cpu"
+model = model.to(device)
+
+# Hàm xử lý luồng phản hồi từ model
+def askModel(messages):
+    chat_template = tokenizer.apply_chat_template(messages, tokenize=False)
+    inputs = tokenizer(chat_template, return_tensors="pt").to(device)
+    streamer = TextIteratorStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
+    generation_kwargs = dict(
+        **inputs,
+        max_new_tokens=512,
+        do_sample=True,
+        temperature=0.5,
+        top_k=75,
+        top_p=0.85,
+        eos_token_id=tokenizer.eos_token_id,
+        pad_token_id=tokenizer.pad_token_id,
+        streamer=streamer
+    )
+    # Generate in a separate thread to avoid blocking
+    thread = Thread(target=model.generate, kwargs=generation_kwargs)
+    thread.start()
+    yield "data: [START]\n\n"
+    for new_text in streamer:
+        print(new_text, end="", flush=True)
+        yield f"data: {new_text}\n\n"
+    thread.join()
+    yield "data: [DONE]\n\n"
+
+# Khởi tạo Flask app
 app = Flask(__name__)
-socketio = SocketIO(app, cors_allowed_origins="*")  # Đảm bảo WebSocket có thể nhận từ bất kỳ nguồn nào
+CORS(app)  # Cho phép tất cả các nguồn truy cập
 
-@app.route('/api/data', methods=['POST'])
-def receive_data():
-    data = request.get_json()
-    idSocket = data['idSocket']
-    messages = data['messages']
-    
-    # Xử lý câu hỏi từ client và trả về câu trả lời
-    res = askModel(messages, idSocket, socketio)  # Truyền socketio vào askModel
-
-    # Phản hồi lại với một thông điệp (có thể gửi qua HTTP hoặc WebSocket nếu cần)
-    response = {
-        'message': 'Dữ liệu đã nhận thành công!',
-        "can_answer": True,
-        "role": "answer",
-        "content": res,
-        "idSocket": idSocket,
-    }
-
-    return jsonify(response), 200
-
-# Sử dụng WebSocket để nhận và gửi tin nhắn realtime
-@socketio.on('send_message')
-def handle_send_message(data):
-    """Lắng nghe sự kiện gửi tin nhắn từ client."""
-    idSocket = data['idSocket']
-    messages = data['messages']
-    
-    # Xử lý câu hỏi và trả về câu trả lời realtime
-    result = askModel(messages, idSocket, socketio)  # Truyền socketio vào
-
-    # Gửi lại câu trả lời qua WebSocket
-    emit('receive_message', {
-        'role': 'answer',
-        'content': result,
-        'idSocket': idSocket,
-        'can_answer': True
-    }, room=idSocket)  # Gửi về đúng client qua WebSocket
+@app.route('/stream', methods=['POST'])
+def stream():
+    try:
+        data = request.get_json()
+        if not data:
+            return Response("Invalid JSON", status=400, content_type='text/plain')
+        
+        messages = data.get('messages', [])
+        if not messages:
+            return Response("Missing 'messages' in JSON", status=400, content_type='text/plain')
+        
+        return Response(
+            askModel(messages),
+            content_type='text/event-stream',
+            headers={
+                'Cache-Control': 'no-cache',
+                'Connection': 'keep-alive',
+                'Access-Control-Allow-Origin': '*',
+                'X-Accel-Buffering': 'no'  # Thêm header này
+            }
+        )
+        
+    except Exception as e:
+        return Response(f"Error: {str(e)}", status=500, content_type='text/plain')
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True)  # Sử dụng socketio.run thay vì app.run()
+    app.run(debug=True, threaded=True)
