@@ -2,7 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import io from "socket.io-client";
 
 // URL của server Socket.IO
-const SOCKET_URL = "https://0be1-118-70-118-224.ngrok-free.app";
+const SOCKET_URL =
+  "https://321c-2405-4802-17c0-93d0-6810-df6b-59f9-d9d8.ngrok-free.app";
 const socket = io(SOCKET_URL);
 
 export default function Content() {
@@ -28,6 +29,7 @@ export default function Content() {
   // Xử lý tin nhắn nhận từ server
   useEffect(() => {
     const handleReceiveMessage = (response) => {
+      console.log(response);
       const { content } = response;
       console.log("Content received:", content);
 
