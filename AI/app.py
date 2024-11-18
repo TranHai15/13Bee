@@ -24,7 +24,7 @@ def askModel(messages):
         **inputs,
         max_new_tokens=512,
         do_sample=True,
-        temperature=0.5,
+        temperature=0.3,
         top_k=75,
         top_p=0.85,
         eos_token_id=tokenizer.eos_token_id,
@@ -35,17 +35,19 @@ def askModel(messages):
     thread = Thread(target=model.generate, kwargs=generation_kwargs)
     thread.start()
     yield "data: [START]\n\n"
+    print("\n\n")
     for new_text in streamer:
         print(new_text, end="", flush=True)
         yield f"data: {new_text}\n\n"
     thread.join()
+    print("\n\n")
     yield "data: [DONE]\n\n"
 
 # Khởi tạo Flask app
 app = Flask(__name__)
 CORS(app)  # Cho phép tất cả các nguồn truy cập
 
-@app.route('/stream', methods=['POST'])
+@app.route('/', methods=['POST'])
 def stream():
     try:
         data = request.get_json()
@@ -53,6 +55,7 @@ def stream():
             return Response("Invalid JSON", status=400, content_type='text/plain')
         
         messages = data.get('messages', [])
+        print(messages)
         if not messages:
             return Response("Missing 'messages' in JSON", status=400, content_type='text/plain')
         
