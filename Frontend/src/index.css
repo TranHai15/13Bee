@@ -1,6 +1,11 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+* {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
 /* Tùy chỉnh thanh cuộn */
 .your-element::-webkit-scrollbar {
   width: 2px; /* Độ rộng của thanh cuộn */
@@ -61,4 +66,36 @@
 }
 .dot:nth-child(3) {
   animation-delay: 0.4s; /* Delay cho dấu chấm thứ 3 */
+}
+
+/*  */
+
+.sirbar {
+  box-shadow: 0 2px 3px gray;
+  background-color: #666;
+}
+
+.header {
+  background-color: #999;
+}
+
+.noidung {
+  background-color: #6e6e;
+}
+
+.text-hello {
+  color: aqua;
+}
+.input-nhaplieu {
+  background-color: #0908;
+}
+.logo-title {
+  color: bisque;
+}
+
+.btn-login {
+  background-color: cadetblue;
+}
+.content-login {
+  color: chocolate;
 }
