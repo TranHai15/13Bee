@@ -9,6 +9,8 @@ const middlewares = require("../middlewares/authenticateToken");
 const userController = require("../controllers/userController");
 //  lay toan bo nguoi dung
 router.get("/", middlewares.verifyTokenAdmin, userController.getAllusers);
+
+router.get("/chat/:id", middlewares.verifyToken, userController.getAllChat);
 // xoa nguoi dung
 router.delete(
   "/delete/:id",
@@ -16,5 +18,5 @@ router.delete(
   userController.deleteUser
 );
 // dieu huong bat dang nhap
-router.get("/lichsu", middlewares.verifyToken);
+// router.get("/lichsu", middlewares.verifyToken);
 module.exports = router;

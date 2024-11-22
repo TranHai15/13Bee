@@ -3,13 +3,15 @@ const jwt = require("jsonwebtoken");
 const middlewares = {
   // Kiểm tra trạng thái đăng nhập
   verifyToken: (req, res, next) => {
-    const token = req.body.accessToken;
+    const token = req.headers.accesstoken;
+    // console.log();
     // console.log("sdfgs", token);
     if (token) {
       const accessToken = token.split(" ")[1];
-      // console.log(accessToken);
+      console.log(accessToken);
       jwt.verify(accessToken, process.env.JWT_ACCESS_TOKEN, (error, user) => {
         if (error) {
+          // console.log(error);
           return res.status(401).json("Token đã hết hạn.");
         }
         req.user = user;
@@ -23,7 +25,7 @@ const middlewares = {
   // Kiểm tra xem người dùng có phải là admin hay không
   verifyTokenAdmin: (req, res, next) => {
     middlewares.verifyToken(req, res, () => {
-      console.log("req", req.user);
+      // console.log("req", req.user.role);
       if (req.user && req.user.role === 1) {
         next();
       } else {

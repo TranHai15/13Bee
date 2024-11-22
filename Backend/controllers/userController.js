@@ -40,6 +40,23 @@ const dataUser = {
         .json({ message: "Lỗi xóa người dùng", error: error.message });
     }
   },
+  getAllChat: async (req, res) => {
+    try {
+      const idUser = req.params.id; // Lấy id từ req.params thay vì req.body
+      console.log(idUser);
+      if (!idUser) {
+        return res.status(400).json("ID người dùng là bắt buộc."); // Kiểm tra ID
+      }
+
+      const getChat = await User.getAllChat(idUser);
+      console.log("message: Lay thành công");
+      return res.status(200).json({ getChat });
+    } catch (error) {
+      return res
+        .status(500)
+        .json({ message: "Lỗi lay lich su chat", error: error.message });
+    }
+  },
 };
 
 module.exports = dataUser;

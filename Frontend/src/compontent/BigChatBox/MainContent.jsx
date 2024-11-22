@@ -11,6 +11,7 @@ export default function MainContent() {
   const textareaRef = useRef(null);
   const chatEndRef = useRef(null);
   const [streamData, setStreamData] = useState("");
+  // console.log(MessageChat)
 
   // Điều chỉnh chiều cao textarea khi người dùng nhập
   useEffect(() => {
@@ -60,23 +61,26 @@ export default function MainContent() {
     setIsSending(true);
 
     try {
-      const response = await fetch("http://localhost:5000/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          messages: [
-            {
-              role: "system",
-              content:
-                'Bạn là một trợ lí ảo. Tên của bạn là 13Bee (Một Ba Bi). Bạn được sinh ra ngày 01/10/2024. Hãy chào hỏi một cách ngắn gọn và thân thiện, số điện thoại 0838 411 897. Nếu không biết thì trả lời là "Tôi không biết", đừng cố trả lời.',
-            },
-            ...MessageChat,
-            { role: "user", content: dataMessage },
-          ],
-        }),
-      });
+      const response = await fetch(
+        "https://fba0-2405-4802-17a4-cfa0-9528-c7c5-6a7e-c2bc.ngrok-free.app",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            messages: [
+              {
+                role: "system",
+                content:
+                  'Bạn là một trợ lí ảo. Tên của bạn là 13Bee (Một Ba Bi). Bạn được sinh ra ngày 01/10/2024. Hãy chào hỏi một cách ngắn gọn và thân thiện, số điện thoại 0838 411 897. Nếu không biết thì trả lời là "Tôi không biết", đừng cố trả lời.',
+              },
+              ...MessageChat,
+              { role: "user", content: dataMessage },
+            ],
+          }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`Server error: ${response.status}`);

@@ -6,7 +6,10 @@ import { refreshAccessToken } from "../../api";
 export default function Header() {
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-
+  const [isOpen, setIsOpen] = useState(false);
+  const toggleDropdown = () => {
+    setIsOpen(!isOpen);
+  };
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
     if (token) {
@@ -20,11 +23,9 @@ export default function Header() {
     if (isLoggedIn) {
       intervalId = setInterval(() => {
         refreshAccessToken();
-      }, 55000);
+      }, 550000);
     }
-    let i = 0;
-    console.log(i);
-    i++;
+
     return () => clearInterval(intervalId); // Dọn dẹp interval khi component unmount
   }, [isLoggedIn]);
 
@@ -41,7 +42,11 @@ export default function Header() {
         "http://localhost:3000/auth/logout",
         {
           id: id,
-          accessToken: `Baber ${token}`,
+        },
+        {
+          headers: {
+            accessToken: `Baber ${token}`, // Gửi token qua header
+          },
         }
       );
 
@@ -74,31 +79,28 @@ export default function Header() {
           13Bee
         </a>
       </div>
-      <div className="ml-auto mr-9">
-        <img src="../../../src/assets/Filter.svg" />
-      </div>
+
       {isLoggedIn ? (
-        <button
-          onClick={logoutUser}
-          className="bg-red-300 text-xl p-2 rounded-lg font-medium hover:bg-red-500 transition-all"
-        >
-          Sign Out
-        </button>
-      ) : (
-        <div>
-          <a
-            href="/login"
-            className="bg-red-300 text-xl p-2 rounded-lg font-medium hover:bg-red-500 transition-all"
-          >
-            Log In
-          </a>
-          <a
-            href="/signup"
-            className="bg-red-300 text-xl p-2 rounded-lg font-medium hover:bg-red-500 transition-all ml-3"
-          >
-            Sign Up
-          </a>
+        <div className="relative">
+          {/* Biểu tượng hình ảnh */}
+          <div className="ml-auto mr-9 cursor-pointer" onClick={toggleDropdown}>
+            <img src="../../../src/assets/Filter.svg" alt="Filter" />
+          </div>
+
+          {/* Dropdown Menu */}
+          {isOpen && (
+            <div className="absolute right-0 mt-2 bg-white p-2 shadow-lg rounded-md w-40">
+              <button
+                onClick={logoutUser}
+                className="w-full text-left text-red-500 hover:text-red-700"
+              >
+                Sign Out
+              </button>
+            </div>
+          )}
         </div>
+      ) : (
+        ""
       )}
     </header>
   );

@@ -39,7 +39,7 @@ const authController = {
     return jwt.sign(
       { id: user.id, role: user.role_id },
       process.env.JWT_ACCESS_TOKEN,
-      { expiresIn: "60s" }
+      { expiresIn: "600s" }
     );
   },
 
@@ -83,16 +83,15 @@ const authController = {
         const expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
         await User.insertSession(user.id, accessToken, refreshToken, expiresAt);
       }
-
+      console.log("accetoken", accessToken);
       res.cookie("refreshToken", refreshToken, {
         secure: false,
         path: "/",
         sameSite: "Strict",
       });
-
       const { password: pwd, ...userData } = user;
       // console.log({ userData, accessToken, refreshToken });
-      res.status(200).json({ userData, accessToken });
+      res.status(200).json({ userData, accessToken, refreshToken });
     } catch (error) {
       res.status(500).json("Đã xảy ra lỗi khi đăng nhập");
     }
@@ -100,8 +99,9 @@ const authController = {
 
   // Refresh token
   requestRefreshToken: async (req, res) => {
-    const refreshToken = req.cookies.refreshToken;
-    console.log("message", refreshToken);
+    const refreshToken = req.body.refreshToken;
+    // console.log(req.body);
+    // console.log("message", refreshToken);
     if (!refreshToken) {
       return res.status(401).json("Bạn chưa đăng nhập.");
     }
@@ -133,6 +133,7 @@ const authController = {
           });
           res.status(200).json({
             accessToken: newAccessToken,
+            refreshToken: newRefreshToken,
           });
         }
       );
@@ -144,6 +145,7 @@ const authController = {
   // Logout
   userLogout: async (req, res) => {
     console.log(req);
+    console.log(req.body);
     await User.deleteSession(req.body.id);
     res.clearCookie("refreshToken");
     res.status(200).json("Đăng xuất thành công.");

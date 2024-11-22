@@ -32,6 +32,15 @@ app.get("/", (req, res) => {
   res.send("Hello, world!");
 });
 
+app.post("/test", (req, res) => {
+  res.cookie("refreshToken", "test nào", {
+    secure: false,
+    path: "/",
+    sameSite: "Strict",
+  });
+  res.status(200).json("test côkie");
+});
+
 // Sử dụng authRouter cho các route bắt đầu bằng /auth
 app.use("/auth", authRouter);
 // Sử dụng userRouter cho các route bắt đầu bằng /user

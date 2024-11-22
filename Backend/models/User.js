@@ -86,6 +86,24 @@ class User {
     }
   }
 
+  //  lay toan bo lich su chat
+  static async getAllChat(id) {
+    const user = new User();
+    await user.connect();
+
+    const query = `SELECT * FROM chat_history where id = ? `;
+
+    try {
+      const [rows] = await user.connection.execute(query, [id]);
+      return rows; // Trả về tất cả n=
+    } catch (error) {
+      console.error("Không lấy được dữ liệu lich su chat:", error);
+      throw error;
+    } finally {
+      await user.closeConnection(); // Đóng kết nối
+    }
+  }
+
   // Xóa người dùng
   static async delete(id) {
     const user = new User();

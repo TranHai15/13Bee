@@ -1,7 +1,13 @@
 // import { useEffect, useState } from "react"; // Thêm useState ở đây
 import { Routes, Route, Navigate } from "react-router-dom";
 
-import { Content, LoginPage, SignupPage } from "./compontent";
+import {
+  Content,
+  LoginPage,
+  SignupPage,
+  AdminChatHistory,
+  ListUser,
+} from "./compontent";
 
 export default function App() {
   // const [isAuthenticated, setIsAuthenticated] = useState(true);
@@ -14,6 +20,8 @@ export default function App() {
     <>
       <Routes>
         <Route path="/login" element=<LoginPage /> />
+        <Route path="/admin" element=<AdminChatHistory /> />
+        <Route path="/listUser" element=<ListUser /> />
         <Route path="/signup" element=<SignupPage /> />
         <Route path="/" element=<Content /> />
       </Routes>

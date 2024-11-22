@@ -17,11 +17,12 @@ export default function LoginPage() {
         "http://localhost:3000/auth/login",
         Data
       );
-      const { userData, accessToken } = response.data;
-      // console.log(response.data);
+      const { userData, accessToken, refreshToken } = response.data;
+      console.log("daya", response.data);
       // console.log(userData.id);
       // Lưu accessToken vào localStorage
       localStorage.setItem("accessToken", accessToken);
+      localStorage.setItem("refreshToken", refreshToken);
       // luu refreshtoken vao localStorage
 
       // luu data vao localstroage
@@ -30,9 +31,11 @@ export default function LoginPage() {
       // Tải lại trang hoặc chuyển đến trang chủ
 
       setTimeout(() => {
-        // Cách 1: Tải lại trang
-        // window.location.reload();
-        window.location.href = "/";
+        if (userData.role_id === 1) {
+          window.location.href = "/admin";
+        } else {
+          window.location.href = "/";
+        }
       }, 300); // 1 giây để người dùng có thời gian đọc thông báo
     } catch (error) {
       setError(
