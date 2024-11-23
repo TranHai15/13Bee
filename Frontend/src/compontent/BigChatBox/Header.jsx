@@ -23,7 +23,7 @@ export default function Header() {
     if (isLoggedIn) {
       intervalId = setInterval(() => {
         refreshAccessToken();
-      }, 550000);
+      }, 100000);
     }
 
     return () => clearInterval(intervalId); // Dọn dẹp interval khi component unmount
@@ -56,6 +56,7 @@ export default function Header() {
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
       localStorage.removeItem("id");
+      localStorage.removeItem("roomId");
       setIsLoggedIn(false);
       navigate("/"); // Điều hướng về trang chính
 

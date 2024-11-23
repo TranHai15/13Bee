@@ -10,7 +10,17 @@ const userController = require("../controllers/userController");
 //  lay toan bo nguoi dung
 router.get("/", middlewares.verifyTokenAdmin, userController.getAllusers);
 
+// lay lich su chat cua nguoi dung
 router.get("/chat/:id", middlewares.verifyToken, userController.getAllChat);
+router.post("/topquesun", userController.getAllTopCauhoi);
+router.post("/historyChat", userController.getAllChatByIdRoom);
+// them du lieu vao dataabse
+router.post(
+  "/send/",
+  middlewares.verifyToken,
+  userController.insertMessageChat
+);
+
 // xoa nguoi dung
 router.delete(
   "/delete/:id",

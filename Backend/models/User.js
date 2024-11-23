@@ -73,7 +73,7 @@ class User {
     const user = new User();
     await user.connect();
 
-    const query = `SELECT * FROM account`;
+    const query = `SELECT a.* , c.* FROM account  AS a JOIN chat_history AS c ON a.id = c.id`;
 
     try {
       const [rows] = await user.connection.execute(query);
@@ -91,11 +91,55 @@ class User {
     const user = new User();
     await user.connect();
 
-    const query = `SELECT * FROM chat_history where id = ? `;
+    const query = `SELECT * FROM chat_history where id = ? ORDER BY create_at DESC  `;
 
     try {
       const [rows] = await user.connection.execute(query, [id]);
       return rows; // Trả về tất cả n=
+    } catch (error) {
+      console.error("Không lấy được dữ liệu lich su chat:", error);
+      throw error;
+    } finally {
+      await user.closeConnection(); // Đóng kết nối
+    }
+  }
+
+  // lấy ra 10 cau hỏi đc sử dụng nhiều nhất
+  static async getAllTopQuesun() {
+    const user = new User();
+    await user.connect();
+
+    const query = `SELECT 
+    content, 
+    COUNT(*) AS question_count,
+    MIN(create_at) AS createAt
+FROM chat_history_detail
+WHERE role = 'user'
+GROUP BY content
+ORDER BY question_count DESC
+LIMIT 10`;
+    try {
+      const [rows] = await user.connection.execute(query);
+      return rows;
+    } catch (error) {
+      console.error("Không lấy được dữ liệu lich su chat:", error);
+      throw error;
+    } finally {
+      await user.closeConnection(); // Đóng kết nối
+    }
+  }
+
+  // lấy chat theo id chat
+
+  static async getAllChatByidChat_id(id) {
+    const user = new User();
+    await user.connect();
+
+    const query = `SELECT * FROM chat_history_detail WHERE chat_id = ? ORDER BY create_at DESC `;
+
+    try {
+      const [rows] = await user.connection.execute(query, [id]);
+      return rows;
     } catch (error) {
       console.error("Không lấy được dữ liệu lich su chat:", error);
       throw error;
@@ -129,6 +173,59 @@ class User {
 
     const query = `INSERT INTO user_sessions (id, access_token, refresh_token, expires_at) VALUES (?, ?, ?, ?)`;
     const values = [userId, accessToken, refreshToken, expiresAt];
+
+    try {
+      const [result] = await user.connection.execute(query, values);
+      return result.insertId; // Trả về ID của phiên đã thêm
+    } catch (error) {
+      console.error("Error inserting session:", error);
+      throw error;
+    } finally {
+      await user.closeConnection(); // Đóng kết nối
+    }
+  }
+
+  // them lich su cau hoi vao database
+  static async insertMessage(chat_id, id, chat_title, create_at) {
+    const user = new User();
+    await user.connect();
+
+    const query = `INSERT INTO chat_history (chat_id, id, chat_title, create_at) VALUES (?, ?, ?, ?)`;
+    const values = [chat_id, id, chat_title, create_at];
+
+    try {
+      const [result] = await user.connection.execute(query, values);
+      return result.insertId; // Trả về ID của phiên đã thêm
+    } catch (error) {
+      console.error("Error inserting session:", error);
+      throw error;
+    } finally {
+      await user.closeConnection(); // Đóng kết nối
+    }
+  }
+
+  static async checkRoomExists(roomId) {
+    const user = new User();
+    await user.connect();
+    const query = `SELECT chat_id FROM chat_history WHERE chat_id = ? `;
+    const values = [roomId];
+    try {
+      const [result] = await user.connection.execute(query, values);
+      return result.length > 0; // Trả về true nếu phòng tồn tại
+    } catch (error) {
+      console.error("Error checking room:", error.message);
+      throw error;
+    }
+  }
+
+  // them du lieu vao lich su chat
+
+  static async inssertOnechat(chat_id, role, content, create_at) {
+    const user = new User();
+    await user.connect();
+
+    const query = `INSERT INTO chat_history_detail (chat_id, role, content, create_at) VALUES (?, ?, ?, ?)`;
+    const values = [chat_id, role, content, create_at];
 
     try {
       const [result] = await user.connection.execute(query, values);

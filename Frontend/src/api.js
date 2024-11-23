@@ -29,7 +29,8 @@ const refreshAccessToken = async () => {
     if (data.accessToken) {
       localStorage.setItem("accessToken", data.accessToken); // Lưu token mới
       localStorage.setItem("refreshToken", data.refreshToken); // Lưu token mới
-      console.log("Access token refreshed:", data.accessToken);
+      // console.log("Access token refreshed:", data.accessToken);
+      // alert("goi ddc roi");
     } else {
       console.error("Failed to refresh access token");
     }

@@ -8,7 +8,7 @@ const middlewares = {
     // console.log("sdfgs", token);
     if (token) {
       const accessToken = token.split(" ")[1];
-      console.log(accessToken);
+      // console.log(accessToken);
       jwt.verify(accessToken, process.env.JWT_ACCESS_TOKEN, (error, user) => {
         if (error) {
           // console.log(error);

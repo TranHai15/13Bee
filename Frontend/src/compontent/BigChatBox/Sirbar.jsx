@@ -1,44 +1,77 @@
 import { useState, useEffect } from "react";
 
-export default function Sirbar() {
+export default function Sirbar({ dataChat }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [roomId, setRooID] = useState(null);
+
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
     if (token) {
-      setIsLoggedIn(true); // Nếu có accessToken thì coi như đã đăng nhập
+      setIsLoggedIn(true);
+      console.log("Dữ liệu từ Content:", dataChat); // In ra dữ liệu truyền từ Content
     }
-  }, []);
+  }, [dataChat]); // Lắng nghe sự thay đổi của dataChat
+
+  useEffect(() => {
+    if (roomId !== null) {
+      localStorage.setItem("roomId", roomId);
+      localStorage.setItem("oldRoomId", roomId);
+
+      location.reload();
+    }
+  }, [roomId]);
+  const addRoomId = () => {
+    if (isLoggedIn) {
+      localStorage.removeItem("roomId");
+      location.reload();
+    } else {
+      alert("ban chua dang nhap");
+    }
+  };
 
   return (
-    <div className="sirbar flex-1 h-screen relative shadow-md your-element overflow-y-auto relative ">
-      <aside className="w-full flex-col shadow-md ">
-        <div className="flex justify-between items-center px-4 py-[0.85rem] sticky top-0 left-0 ring-0 sirbar z-20">
+    <div className="sirbar flex-1 h-screen relative shadow-md overflow-y-auto">
+      <aside className="w-full flex-col shadow-md">
+        <div className="flex justify-between items-center px-4 py-[0.85rem] sticky top-0 left-0 z-20">
           <div>
             <img
               className="w-5 object-contain"
               src="../../../src/assets/coles.svg"
+              alt="Icon"
             />
           </div>
           <div>
-            <img
-              className="w-5 object-contain"
-              src="../../../src/assets/add.svg"
-            />
+            <span onClick={addRoomId}>
+              {" "}
+              <img
+                className="w-5 object-contain"
+                src="../../../src/assets/add.svg"
+                alt="Add"
+              />
+            </span>
           </div>
         </div>
 
-        {isLoggedIn && (
-          <div className="flex flex-col-reverse">
-            <ul className="py-8 ">
-              <li className="px-4 cursor-pointer hover:bg-slate-400 rounded-sm py-2 mt-1 text-sm font-medium">
-                Xử lý SSE và dữ liệu
+        {isLoggedIn && dataChat.length > 0 ? (
+          <ul className="py-8">
+            {dataChat.map((item, index) => (
+              <li
+                onClick={() => setRooID(item.chat_id)}
+                key={index}
+                className="px-4 cursor-pointer hover:bg-slate-400 rounded-sm py-2 mt-1 text-sm font-medium truncate max-w-xs"
+              >
+                {item.chat_title || "No Title"} <br />
               </li>
-            </ul>
-          </div>
+            ))}
+          </ul>
+        ) : (
+          isLoggedIn && (
+            <p className="text-center py-4">Không có tin nhắn nào.</p>
+          )
         )}
 
         {!isLoggedIn && (
-          <button className=" absolute bottom-2 left-2 right-2 px-5 py-3 font-bold text-white bg-emerald-500 rounded-md m-4 btn-login">
+          <button className="absolute bottom-2 left-2 right-2 px-5 py-3 font-bold text-white bg-emerald-500 rounded-md m-4">
             <a className="content-login" href="/login">
               Đăng nhập
             </a>

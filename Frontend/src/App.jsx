@@ -5,7 +5,7 @@ import {
   Content,
   LoginPage,
   SignupPage,
-  AdminChatHistory,
+  AdminHome,
   ListUser,
 } from "./compontent";
 
@@ -20,7 +20,7 @@ export default function App() {
     <>
       <Routes>
         <Route path="/login" element=<LoginPage /> />
-        <Route path="/admin" element=<AdminChatHistory /> />
+        <Route path="/admin" element=<AdminHome /> />
         <Route path="/listUser" element=<ListUser /> />
         <Route path="/signup" element=<SignupPage /> />
         <Route path="/" element=<Content /> />

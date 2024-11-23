@@ -1,19 +1,68 @@
 import { useState, useRef, useEffect } from "react";
 import { flushSync } from "react-dom";
+
 export default function MainContent() {
-  const [message, setMessage] = useState(""); // Lưu tin nhắn người dùng
-  const [MessageChat, SetMessagesChat] = useState([]); // Lưu lịch sử tin nhắn
-  const [charLimitReached, setCharLimitReached] = useState(false); // Kiểm tra giới hạn ký tự
-  const [connectionError, setConnectionError] = useState(true); // Kiểm tra lỗi kết nối
-  const [isSending, setIsSending] = useState(false); // Kiểm tra trạng thái gửi tin nhắn
-  const charLimit = 500; // Giới hạn ký tự
-  const start = useRef(true); // Biến kiểm tra trạng thái ban đầu của màn hình
+  const [message, setMessage] = useState("");
+  const [MessageChat, SetMessagesChat] = useState([]);
+  const [charLimitReached, setCharLimitReached] = useState(false);
+  const [connectionError, setConnectionError] = useState(true);
+  const [isSending, setIsSending] = useState(false);
+  const [roomId, setRoomId] = useState(""); // Quản lý roomId trong state
+  const charLimit = 500;
+  const start = useRef(true);
   const textareaRef = useRef(null);
   const chatEndRef = useRef(null);
+  const [isReplying, setIsReplying] = useState(false);
   const [streamData, setStreamData] = useState("");
-  // console.log(MessageChat)
 
-  // Điều chỉnh chiều cao textarea khi người dùng nhập
+  // Khi load trang, kiểm tra hoặc tạo roomId
+  useEffect(() => {
+    let storedRoomId = localStorage.getItem("roomId");
+    if (!storedRoomId) {
+      // Tạo roomId mới nếu chưa có
+      storedRoomId = `room_${Date.now()}`;
+      localStorage.setItem("roomId", storedRoomId);
+    }
+    setRoomId(storedRoomId); // Cập nhật roomId vào state
+  }, []);
+
+  // Kiểm tra và gọi API lấy lịch sử chat
+  useEffect(() => {
+    const oldRoomId = localStorage.getItem("oldRoomId");
+
+    // Chỉ gọi API nếu oldRoomId tồn tại và bằng roomId
+    if (oldRoomId && oldRoomId === roomId) {
+      fetchChatHistory(oldRoomId);
+    }
+  }, [roomId]);
+
+  const fetchChatHistory = async (roomId) => {
+    try {
+      const accessToken = localStorage.getItem("accessToken");
+      const response = await fetch(`http://localhost:3000/user/historyChat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          accessToken: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ id: roomId }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Lỗi khi lấy lịch sử chat");
+      }
+
+      const chatData = await response.json();
+      console.log("chatData", chatData);
+      // Cập nhật MessageChat với lịch sử chat lấy được
+      SetMessagesChat(chatData.getChat || []);
+      localStorage.removeItem("oldRoomId");
+      start.current = false;
+    } catch (error) {
+      console.error("Lỗi khi gọi API lịch sử chat:", error);
+    }
+  };
+
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
@@ -22,19 +71,26 @@ export default function MainContent() {
     setCharLimitReached(message.length >= charLimit);
   }, [message]);
 
-  // Tự động cuộn tới tin nhắn cuối cùng khi có tin nhắn mới
   useEffect(() => {
     if (chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [MessageChat]);
 
-  // Xử lý khi người dùng nhập tin nhắn
+  useEffect(() => {
+    if (isReplying) {
+      const lastMessage = MessageChat.at(-1);
+      if (lastMessage?.role === "answer" && lastMessage?.content) {
+        luuAl(roomId); // Lưu câu trả lời vào database với roomId
+      }
+      setIsReplying(false);
+    }
+  }, [isReplying, MessageChat]);
+
   const handleInputChange = (e) => {
     setMessage(e.target.value);
   };
 
-  // Gửi tin nhắn khi người dùng nhấn phím Enter
   const clickEnter = (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -42,10 +98,10 @@ export default function MainContent() {
     }
   };
 
-  // Kiểm tra tính hợp lệ của tin nhắn (ngăn chặn các thẻ HTML)
   const validateInput = (input) => {
     return input.trim().replace(/</g, "&lt;").replace(/>/g, "&gt;") || "";
   };
+
   const submitMessage = async () => {
     start.current = false;
     if (isSending) return;
@@ -59,10 +115,12 @@ export default function MainContent() {
     ]);
     setMessage("");
     setIsSending(true);
+    const dulieuuser = { role: "user", content: dataMessage };
+    inserMessageUser(roomId, dulieuuser);
 
     try {
       const response = await fetch(
-        "https://fba0-2405-4802-17a4-cfa0-9528-c7c5-6a7e-c2bc.ngrok-free.app",
+        "https://1863-2405-4802-17a4-cfa0-59d1-5-a50e-2269.ngrok-free.app",
         {
           method: "POST",
           headers: {
@@ -85,6 +143,7 @@ export default function MainContent() {
       if (!response.ok) {
         throw new Error(`Server error: ${response.status}`);
       }
+
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       while (true) {
@@ -96,33 +155,68 @@ export default function MainContent() {
 
         for (const line of lines) {
           if (line.startsWith("data: ")) {
-            const data = line.slice(6); // Loại bỏ khoảng trắng và ký tự xuống dòng.
+            const data = line.slice(6);
             if (data === "[START]") continue;
             if (data === "[DONE]") break;
 
             flushSync(() => {
-              setStreamData((prev) => prev + data); // Ghép nối vào dữ liệu hiện có.
+              setStreamData((prev) => prev + data);
               SetMessagesChat((prevMessages) => {
                 const lastMessage = prevMessages[prevMessages.length - 1];
                 if (lastMessage?.role === "answer") {
-                  // Cập nhật nội dung tin nhắn cuối cùng.
                   return [
                     ...prevMessages.slice(0, -1),
                     { ...lastMessage, content: lastMessage.content + data },
                   ];
                 }
-                // Thêm tin nhắn mới nếu chưa có.
                 return [...prevMessages, { role: "answer", content: data }];
               });
             });
+
             setIsSending(false);
           }
         }
       }
+      setIsReplying(true);
     } catch (error) {
       console.error("Error:", error);
     }
   };
+
+  const luuAl = (roomID) => {
+    const dongcuoi = MessageChat.at(-1) ?? null;
+    if (dongcuoi) {
+      const dulieuanswer = { role: "answer", content: dongcuoi.content };
+      inserMessageUser(roomID, dulieuanswer);
+    }
+  };
+
+  const inserMessageUser = async (room, message) => {
+    const accessToken = localStorage.getItem("accessToken");
+    const id = localStorage.getItem("id");
+
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const response = await fetch(`http://localhost:3000/user/send`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            accessToken: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({ room: room, message: message, id: id }),
+        });
+
+        if (response.ok) {
+          console.log("Message saved successfully!");
+          return;
+        }
+      } catch (error) {
+        console.error("Retrying... Error:", error);
+      }
+    }
+    console.error("Failed to save message after 3 attempts.");
+  };
+
   return (
     <main className="w-full  mx-auto h-svh  flex flex-col px-28 noidung  ">
       <div className="w-full  relative p-5 flex-grow overflow-auto  your-element mt-9 mb-5">
