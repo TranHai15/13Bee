@@ -77,15 +77,15 @@ export default function MainContent() {
     }
   }, [MessageChat]);
 
-  useEffect(() => {
-    if (isReplying) {
-      const lastMessage = MessageChat.at(-1);
-      if (lastMessage?.role === "answer" && lastMessage?.content) {
-        luuAl(roomId); // Lưu câu trả lời vào database với roomId
-      }
-      setIsReplying(false);
-    }
-  }, [isReplying, MessageChat]);
+  // useEffect(() => {
+  //   if (isReplying) {
+  //     const lastMessage = MessageChat.at(-1);
+  //     if (lastMessage?.role === "answer" && lastMessage?.content) {
+  //       luuAl(roomId); // Lưu câu trả lời vào database với roomId
+  //     }
+  //     setIsReplying(false);
+  //   }
+  // }, [isReplying, MessageChat]);
 
   const handleInputChange = (e) => {
     setMessage(e.target.value);
@@ -109,18 +109,17 @@ export default function MainContent() {
     const dataMessage = validateInput(message);
     if (!dataMessage) return;
 
+    // Thêm tin nhắn của người dùng vào state
     SetMessagesChat((prev) => [
       ...prev,
       { role: "user", content: dataMessage },
     ]);
     setMessage("");
     setIsSending(true);
-    const dulieuuser = { role: "user", content: dataMessage };
-    inserMessageUser(roomId, dulieuuser);
 
     try {
       const response = await fetch(
-        "https://1863-2405-4802-17a4-cfa0-59d1-5-a50e-2269.ngrok-free.app",
+        "https://2bd9-2405-4802-17a4-cfa0-adcd-45f7-a2a3-9936.ngrok-free.app",
         {
           method: "POST",
           headers: {
@@ -146,6 +145,9 @@ export default function MainContent() {
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
+      let aiResponse = "";
+
+      // Đọc luồng dữ liệu từ API AI
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;
@@ -159,8 +161,9 @@ export default function MainContent() {
             if (data === "[START]") continue;
             if (data === "[DONE]") break;
 
+            // Cập nhật state với luồng dữ liệu AI
             flushSync(() => {
-              setStreamData((prev) => prev + data);
+              aiResponse += data;
               SetMessagesChat((prevMessages) => {
                 const lastMessage = prevMessages[prevMessages.length - 1];
                 if (lastMessage?.role === "answer") {
@@ -172,22 +175,20 @@ export default function MainContent() {
                 return [...prevMessages, { role: "answer", content: data }];
               });
             });
-
-            setIsSending(false);
           }
         }
       }
+      setIsSending(false);
+      // Sau khi AI trả lời hoàn tất, lưu cả tin nhắn người dùng và AI vào database
+      if (aiResponse) {
+        await inserMessageUser(roomId, { role: "user", content: dataMessage });
+        await inserMessageUser(roomId, { role: "answer", content: aiResponse });
+      }
+
       setIsReplying(true);
     } catch (error) {
       console.error("Error:", error);
-    }
-  };
-
-  const luuAl = (roomID) => {
-    const dongcuoi = MessageChat.at(-1) ?? null;
-    if (dongcuoi) {
-      const dulieuanswer = { role: "answer", content: dongcuoi.content };
-      inserMessageUser(roomID, dulieuanswer);
+      setIsSending(false);
     }
   };
 
@@ -207,6 +208,9 @@ export default function MainContent() {
         });
 
         if (response.ok) {
+          // console.log(response);
+          const title = await response.json();
+          console.log(title);
           console.log("Message saved successfully!");
           return;
         }
@@ -285,21 +289,11 @@ export default function MainContent() {
 
             {isSending === true && index === MessageChat.length - 1 ? (
               <>
-                <div className="w-8 h-auto flex top-0 relative">
-                  <span className="logo flex-none w-8 absolute top-0 rounded-full">
-                    <img
-                      className="w-full rounded-full object-contain"
-                      src="../../../src/assets/beeit.jpg"
-                    />
-                  </span>
+                <div className="loading-indicator">
+                  <span className="dot"></span>
+                  <span className="dot"></span>
+                  <span className="dot"></span>
                 </div>
-                <>
-                  <div className="loading-indicator">
-                    <span className="dot"></span>
-                    <span className="dot"></span>
-                    <span className="dot"></span>
-                  </div>
-                </>
               </>
             ) : (
               " "

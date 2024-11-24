@@ -73,7 +73,21 @@ class User {
     const user = new User();
     await user.connect();
 
-    const query = `SELECT a.* , c.* FROM account  AS a JOIN chat_history AS c ON a.id = c.id`;
+    const query = `SELECT 
+    a.id AS account_id,
+    a.username, 
+    a.email,
+    MIN(c.id) AS chat_id,
+    MIN(c.chat_title) AS chat_title -- Sử dụng MIN hoặc MAX
+FROM 
+    account AS a
+LEFT JOIN 
+    chat_history AS c 
+ON 
+    a.id = c.id
+GROUP BY 
+    a.id, a.username, a.email;
+`;
 
     try {
       const [rows] = await user.connection.execute(query);
@@ -91,7 +105,21 @@ class User {
     const user = new User();
     await user.connect();
 
-    const query = `SELECT * FROM chat_history where id = ? ORDER BY create_at DESC  `;
+    const query = `SELECT 
+    ch.*, 
+    a.username, 
+    a.email
+FROM 
+    chat_history AS ch
+JOIN 
+    account AS a
+ON 
+    ch.id = a.id
+WHERE 
+    ch.id = ?
+ORDER BY 
+    ch.create_at DESC;
+ `;
 
     try {
       const [rows] = await user.connection.execute(query, [id]);
@@ -135,7 +163,7 @@ LIMIT 10`;
     const user = new User();
     await user.connect();
 
-    const query = `SELECT * FROM chat_history_detail WHERE chat_id = ? ORDER BY create_at DESC `;
+    const query = `SELECT * FROM chat_history_detail WHERE chat_id = ? ORDER BY create_at ASC `;
 
     try {
       const [rows] = await user.connection.execute(query, [id]);

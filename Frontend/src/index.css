@@ -37,16 +37,16 @@ body {
 }
 
 .loading-indicator {
-  margin-left: 2.6rem;
+  margin-left: 2.8rem;
   display: flex;
   align-items: flex-end; /* Căn giữa theo chiều dọc */
-  font-size: 15px; /* Kích thước chữ */
-  margin-top: 1.7rem;
+  font-size: 11px; /* Kích thước chữ */
+  margin-top: 1.3rem;
 }
 
 .dot {
-  width: 7px; /* Kích thước dấu chấm */
-  height: 7px; /* Kích thước dấu chấm */
+  width: 5px; /* Kích thước dấu chấm */
+  height: 5px; /* Kích thước dấu chấm */
   margin: 0 2px; /* Khoảng cách giữa các dấu chấm */
   border-radius: 50%; /* Làm tròn dấu chấm */
   background-color: #333; /* Màu sắc của dấu chấm */
@@ -60,7 +60,7 @@ body {
     opacity: 0.5; /* Độ mờ */
   }
   100% {
-    transform: translateY(-15px); /* Nhảy lên 15px */
+    transform: translateY(-10px); /* Nhảy lên 15px */
     opacity: 1; /* Độ mờ đầy đủ */
   }
 }

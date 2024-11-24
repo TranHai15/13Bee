@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 export default function Sirbar({ dataChat }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [roomId, setRooID] = useState(null);
+  const [lirooom, setLirooom] = useState(null);
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
@@ -10,6 +11,10 @@ export default function Sirbar({ dataChat }) {
       setIsLoggedIn(true);
       console.log("Dữ liệu từ Content:", dataChat); // In ra dữ liệu truyền từ Content
     }
+
+    const newcaht = localStorage.getItem("newChat");
+    setLirooom(newcaht);
+    // localStorage.removeItem("newChat");
   }, [dataChat]); // Lắng nghe sự thay đổi của dataChat
 
   useEffect(() => {
@@ -23,9 +28,10 @@ export default function Sirbar({ dataChat }) {
   const addRoomId = () => {
     if (isLoggedIn) {
       localStorage.removeItem("roomId");
+      localStorage.setItem("newChat", "New");
       location.reload();
     } else {
-      alert("ban chua dang nhap");
+      location.reload();
     }
   };
 
@@ -54,6 +60,11 @@ export default function Sirbar({ dataChat }) {
 
         {isLoggedIn && dataChat.length > 0 ? (
           <ul className="py-8">
+            {lirooom && (
+              <li className="px-4 cursor-pointer bg-slate-500 hover:bg-slate-400 rounded-sm py-2 mt-1 text-sm font-medium truncate max-w-xs">
+                {lirooom}
+              </li>
+            )}
             {dataChat.map((item, index) => (
               <li
                 onClick={() => setRooID(item.chat_id)}

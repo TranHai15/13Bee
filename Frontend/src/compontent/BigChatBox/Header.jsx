@@ -23,7 +23,7 @@ export default function Header() {
     if (isLoggedIn) {
       intervalId = setInterval(() => {
         refreshAccessToken();
-      }, 100000);
+      }, 500000);
     }
 
     return () => clearInterval(intervalId); // Dọn dẹp interval khi component unmount

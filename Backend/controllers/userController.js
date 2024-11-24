@@ -10,7 +10,7 @@ const dataUser = {
       if (!dataAllUser) {
         return res.status(404).json({ message: "Không tìm thấy người dùng." });
       }
-      console.log("useer", dataAllUser);
+      // console.log("useer", dataAllUser);
       return res.status(200).json(dataAllUser);
     } catch (error) {
       return res.status(500).json("Lỗi truy vấn dataUser");
@@ -68,6 +68,42 @@ const dataUser = {
         .json({ message: "Lỗi lay top su chat", error: error.message });
     }
   },
+  getAllChatAdmin: async (req, res) => {
+    try {
+      const idUser = req.params.id;
+
+      console.log(idUser);
+      if (!idUser) {
+        return res.status(400).json("ID chat là bắt buộc."); // Kiểm tra ID
+      }
+
+      const getChat = await User.getAllChatByidChat_id(idUser);
+      // console.log("message: Lay thành công");
+      return res.status(200).json({ getChat });
+    } catch (error) {
+      return res.status(500).json({
+        message: "Lỗi lay lich su chat chi tiet",
+        error: error.message,
+      });
+    }
+  },
+  getOneChat: async (req, res) => {
+    try {
+      const idUser = req.params.id; // Lấy id từ req.params thay vì req.body
+      // console.log(idUser);
+      if (!idUser) {
+        return res.status(400).json("ID người dùng là bắt buộc."); // Kiểm tra ID
+      }
+
+      const getChat = await User.getAllChat(idUser);
+      // console.log("message: Lay thành công");
+      return res.status(200).json({ getChat });
+    } catch (error) {
+      return res
+        .status(500)
+        .json({ message: "Lỗi lay lich su chat", error: error.message });
+    }
+  },
 
   insertMessageChat: async (req, res) => {
     try {
@@ -86,6 +122,7 @@ const dataUser = {
           success: true,
           message: "Đã thêm tin nhắn vào phòng hiện có",
           data: insertOneChat,
+          title: title,
         });
       } else {
         // Nếu phòng chưa tồn tại, tạo phòng mới và thêm tin nhắn
@@ -102,6 +139,7 @@ const dataUser = {
             success: true,
             message: "Phòng mới đã được tạo và tin nhắn đã được thêm",
             data: insertOneChat,
+            title: title,
           });
         } else {
           return res.status(500).json({
