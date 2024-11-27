@@ -7,7 +7,7 @@ from transformers import TextIteratorStreamer
 from threading import Thread
 
 # Khởi tạo model và tokenizer
-model_name = "checkpoint-340"
+model_name = "checkpoint-740"
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16)
 
@@ -22,7 +22,7 @@ def askModel(messages):
     streamer = TextIteratorStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
     generation_kwargs = dict(
         **inputs,
-        max_new_tokens=512,
+        max_new_tokens=1024,
         do_sample=True,
         temperature=0.3,
         top_k=75,

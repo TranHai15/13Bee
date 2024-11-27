@@ -119,7 +119,7 @@ export default function MainContent() {
 
     try {
       const response = await fetch(
-        "https://2bd9-2405-4802-17a4-cfa0-adcd-45f7-a2a3-9936.ngrok-free.app",
+        "http://localhost:5000/",
         {
           method: "POST",
           headers: {
@@ -130,7 +130,7 @@ export default function MainContent() {
               {
                 role: "system",
                 content:
-                  'Bạn là một trợ lí ảo. Tên của bạn là 13Bee (Một Ba Bi). Bạn được sinh ra ngày 01/10/2024. Hãy chào hỏi một cách ngắn gọn và thân thiện, số điện thoại 0838 411 897. Nếu không biết thì trả lời là "Tôi không biết", đừng cố trả lời.',
+                  'Bạn là một trợ lí ảo. Tên của bạn là BeeAI. Bạn được sinh ra ngày 01/10/2024 bởi Nguyễn Ngọc An. Liên hệ qua email: antrc2gamer@gmail.com và số điện thoại: 0838 411 897',
               },
               ...MessageChat,
               { role: "user", content: dataMessage },
@@ -241,7 +241,7 @@ export default function MainContent() {
           {connectionError === true ? (
             <div className="flex items-center">
               <p className="flex-auto w-full max-w-3xl h-auto text-black ml-2 text-4xl font-extrabold text-hello">
-                13Bee xin chào bạn
+                BeeAI xin chào bạn
               </p>
             </div>
           ) : (
@@ -314,7 +314,7 @@ export default function MainContent() {
           </p>
         )}
 
-        <div className="flex items-center sticky right-0 left-0 bottom-3 items-end  bg-white rounded-3xl mx-2 input-nhaplieu">
+        <div className="flex items-center sticky right-0 left-0 bottom-3 items-end  bg-white rounded-3xl mx-2  input-nhaplieu">
           <div className="flex-[19] ">
             <textarea
               ref={textareaRef}

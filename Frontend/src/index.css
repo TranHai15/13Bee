@@ -13,7 +13,6 @@ body {
   background-color: #f4f4f4; /* Nền trang sáng */
   color: #333333;
 }
-
 /* Tùy chỉnh thanh cuộn */
 .your-element::-webkit-scrollbar {
   width: 2px; /* Độ rộng của thanh cuộn */
@@ -79,11 +78,11 @@ body {
 /*  */
 
 .sirbar {
-  background-color: #f55f00;
+  background-color: rgb(31 41 55);
 }
 
 .header {
-  background-color: #f55f00; /* Màu cam FPT */
+  background-color:rgb(31 41 55); /* Màu cam FPT */
 }
 
 .noidung {
@@ -91,13 +90,15 @@ body {
 }
 
 .text-hello {
-  color: aqua;
+  color: black;
+  font-size: 40px;
+  font-weight: 700;
 }
 .input-nhaplieu {
   background-color: #f5f5f5;
 }
 .logo-title {
-  color: bisque;
+  color: white;
 }
 
 .btn-login {
@@ -105,4 +106,14 @@ body {
 }
 .content-login {
   color: chocolate;
+}
+.text-s{
+  color: white;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 20px;
+}
+.login-btn{
+  background-color: #fff;
+  color:rgb(31 41 55) ;
 }

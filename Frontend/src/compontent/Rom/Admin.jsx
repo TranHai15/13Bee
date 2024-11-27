@@ -17,9 +17,8 @@ export default function AdminHome() {
         <Header />
       </div>
       <div className="flex h-screen">
-        <aside className="w-1/5 bg-gray-800 text-white flex flex-col justify-between">
+        <aside className="w-1/5  bg-gray-800 text-white flex flex-col justify-between">
           <div>
-            <h2 className="text-xl font-bold px-4 py-4">Admin Panel</h2>
             <ul>
               <li
                 onClick={() => handlePageChange("chatHistory")} // Chuyển đến trang AdminChatHistory

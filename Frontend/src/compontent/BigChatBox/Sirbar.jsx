@@ -61,7 +61,7 @@ export default function Sirbar({ dataChat }) {
         {isLoggedIn && dataChat.length > 0 ? (
           <ul className="py-8">
             {lirooom && (
-              <li className="px-4 cursor-pointer bg-slate-500 hover:bg-slate-400 rounded-sm py-2 mt-1 text-sm font-medium truncate max-w-xs">
+              <li className=" text-s px-4 cursor-pointer bg-slate-500 hover:bg-slate-400 rounded-sm py-2 mt-1 text-sm font-medium truncate max-w-xs">
                 {lirooom}
               </li>
             )}
@@ -69,7 +69,7 @@ export default function Sirbar({ dataChat }) {
               <li
                 onClick={() => setRooID(item.chat_id)}
                 key={index}
-                className="px-4 cursor-pointer hover:bg-slate-400 rounded-sm py-2 mt-1 text-sm font-medium truncate max-w-xs"
+                className=" text-s px-4 cursor-pointer hover:bg-slate-400 rounded-sm py-2 mt-1 text-sm font-medium truncate max-w-xs"
               >
                 {item.chat_title || "No Title"} <br />
               </li>
@@ -77,16 +77,18 @@ export default function Sirbar({ dataChat }) {
           </ul>
         ) : (
           isLoggedIn && (
-            <p className="text-center py-4">Không có tin nhắn nào.</p>
+            <p className="text-center text-s py-4">Không có tin nhắn nào.</p>
           )
         )}
 
         {!isLoggedIn && (
-          <button className="absolute bottom-2 left-2 right-2 px-5 py-3 font-bold text-white bg-emerald-500 rounded-md m-4">
-            <a className="content-login" href="/login">
+          <a className="content-login" href="/login">
+
+            <button className="absolute bottom-2 left-2 right-2 px-5 py-3 font-bold login-btn rounded-md m-4">
               Đăng nhập
-            </a>
-          </button>
+
+            </button>
+          </a>
         )}
       </aside>
     </div>

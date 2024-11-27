@@ -209,7 +209,7 @@ export default function ListUser() {
                             className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
                             onClick={() => chitietcap3(chat.chat_id)}
                           >
-                            Chi tiet
+                            Chi tiết
                           </button>
                         </td>
                       </tr>

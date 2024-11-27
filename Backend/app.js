@@ -48,7 +48,7 @@ app.use("/user", userRouter);
 // Sử dụng dataRouter cho các route bắt đầu bằng /api
 app.use("/api", dataRouter);
 
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });

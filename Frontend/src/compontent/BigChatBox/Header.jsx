@@ -77,7 +77,7 @@ export default function Header() {
       </span>
       <div className="text-3xl font-extrabold  flex-col  px-9 logo-title">
         <a href="/" className="cursor-pointer">
-          13Bee
+          BeeAI
         </a>
       </div>
 
@@ -85,7 +85,7 @@ export default function Header() {
         <div className="relative">
           {/* Biểu tượng hình ảnh */}
           <div className="ml-auto mr-9 cursor-pointer" onClick={toggleDropdown}>
-            <img src="../../../src/assets/Filter.svg" alt="Filter" />
+            <img src="../../../src/assets/user-solid.svg" className="w-5" alt="Filter" />
           </div>
 
           {/* Dropdown Menu */}
